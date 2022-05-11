@@ -1,12 +1,20 @@
 import React, { Component } from "react";
 import MaterialTable from "material-table";
 import tableIcons from "../icons";
+import moment from "moment";
 
 import "./index.css";
 
 class Form extends Component {
   state = {
     data: [],
+    status: "",
+    todayDate: new Date(),
+    name: "",
+    startTime: "",
+    endTime: "",
+    startDate: "",
+    endDate: "",
   };
   onChangeEventName = (event) => {
     this.setState({ name: event.target.value });
@@ -24,28 +32,48 @@ class Form extends Component {
   onChangeEndDate = (event) => {
     this.setState({ endDate: event.target.value });
   };
+
   componentDidMount() {
+    const { startDate, endDate } = this.state;
+
+    const todayDate = new Date();
+    const currentDate = moment(new Date(todayDate)).format("YYYY-MM-DD");
+
+    if (startDate < currentDate && endDate < currentDate) {
+      this.setState({ status: "Completed" });
+    }
+    if (startDate <= currentDate && endDate >= currentDate) {
+      this.setState({ status: "Ongoing" });
+    }
+    if (startDate > currentDate && endDate > currentDate) {
+      this.setState({ status: "Upcoming" });
+    }
     const details = JSON.parse(localStorage.getItem("details") || "[]");
 
     this.setState({ details: details });
   }
+
   submitForm = (event) => {
     event.preventDefault();
-    const { name, startTime, endTime, startDate, endDate } = this.state;
+
+    const { name, startTime, endTime, startDate, endDate, status } = this.state;
     const details = JSON.parse(localStorage.getItem("details") || "[]");
+
     const data = {
       name: name,
       startTime: startTime,
       endTime: endTime,
       startDate: startDate,
       endDate: endDate,
+      status: status,
     };
+
     details.push(data);
     localStorage.setItem("details", JSON.stringify(details));
     this.componentDidMount();
     this.setState(details);
+    // window.location.reload();
   };
-
   render() {
     const eventDetails = JSON.parse(localStorage.getItem("details"));
 
@@ -106,11 +134,12 @@ class Form extends Component {
         </form>
         <MaterialTable
           icons={tableIcons}
+          options={{ paging: true, search: true }}
           editable={{
             onRowDelete: (selectedRow) =>
               new Promise((resolve, reject) => {
                 const index = selectedRow.tableData.id;
-                console.log(index);
+
                 const updatedRows = [...eventDetails];
                 updatedRows.splice(index, 1);
                 this.setState({
@@ -122,10 +151,10 @@ class Form extends Component {
             onRowUpdate: (updatedRow, oldRow) =>
               new Promise((resolve, reject) => {
                 const index = oldRow.tableData.id;
-                console.log(index);
+
                 const updatedRows = [...eventDetails];
                 updatedRows[index] = updatedRow;
-                console.log(updatedRows);
+
                 this.setState({
                   data: [...this.state.data, ...updatedRows],
                 });
@@ -139,9 +168,10 @@ class Form extends Component {
             { title: "End Time", field: "endTime" },
             { title: "Start Date", field: "startDate" },
             { title: "End Date", field: "endDate" },
+            { title: "Status", field: "status" },
           ]}
           data={eventDetails ? eventDetails : []}
-          title="Demo Title"
+          title="Event Details"
         />
       </div>
     );
