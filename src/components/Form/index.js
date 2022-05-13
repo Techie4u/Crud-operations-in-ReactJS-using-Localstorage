@@ -36,46 +36,62 @@ class Form extends Component {
   componentDidMount() {
     const { startDate, endDate } = this.state;
 
-    const todayDate = new Date();
-    const currentDate = moment(new Date(todayDate)).format("YYYY-MM-DD");
+    // const todayDate = new Date();
+    // const currentDate = moment(new Date(todayDate)).format("YYYY-MM-DD");
 
-    if (startDate < currentDate && endDate < currentDate) {
+    if (
+      moment(new Date(startDate)).format("YYYY-MM-DD") <=
+        moment(new Date()).format("YYYY-MM-DD") &&
+      moment(new Date(endDate)).format("YYYY-MM-DD") >=
+        moment(new Date()).format("YYYY-MM-DD")
+    ) {
+      this.setState({ status: "Inprogress" });
+    } else if (new Date(startDate) > new Date(endDate)) {
+      this.setState({ endDate: startDate });
+    } else if (
+      moment(new Date(startDate)).format("YYYY-MM-DD") <
+        moment(new Date()).format("YYYY-MM-DD") &&
+      moment(new Date(endDate)).format("YYYY-MM-DD") <
+        moment(new Date()).format("YYYY-MM-DD")
+    ) {
       this.setState({ status: "Completed" });
-    }
-    if (startDate <= currentDate && endDate >= currentDate) {
-      this.setState({ status: "Ongoing" });
-    }
-    if (startDate > currentDate && endDate > currentDate) {
+    } else if (
+      moment(new Date(startDate)).format("YYYY-MM-DD") >
+        moment(new Date()).format("YYYY-MM-DD") &&
+      moment(new Date(endDate)).format("YYYY-MM-DD") >
+        moment(new Date()).format("YYYY-MM-DD")
+    ) {
       this.setState({ status: "Upcoming" });
     }
-    const details = JSON.parse(localStorage.getItem("details") || "[]");
-
-    this.setState({ details: details });
   }
 
   submitForm = (event) => {
     event.preventDefault();
 
-    const { name, startTime, endTime, startDate, endDate, status } = this.state;
-    const details = JSON.parse(localStorage.getItem("details") || "[]");
-
-    const data = {
-      name: name,
-      startTime: startTime,
-      endTime: endTime,
-      startDate: startDate,
-      endDate: endDate,
-      status: status,
+    const eventData = {
+      name: this.state.name,
+      startTime: this.state.startTime,
+      endTime: this.state.endTime,
+      startDate: this.state.startDate,
+      endDate: this.state.endDate,
+      status: this.state.status,
     };
+    const details = JSON.parse(localStorage.getItem("events") || "[]");
 
-    details.push(data);
-    localStorage.setItem("details", JSON.stringify(details));
+    details.push(eventData);
+    localStorage.setItem("events", JSON.stringify(details));
     this.componentDidMount();
-    this.setState(details);
-    // window.location.reload();
+
+    this.setState({ name: "" });
+    this.setState({ startDate: "" });
+    this.setState({ endDate: "" });
+    this.setState({ startTime: "" });
+    this.setState({ endTime: "" });
+
+    //window.location.reload();
   };
   render() {
-    const eventDetails = JSON.parse(localStorage.getItem("details"));
+    const eventDetails = JSON.parse(localStorage.getItem("events"));
 
     return (
       <div className="login-form-container">
@@ -145,7 +161,7 @@ class Form extends Component {
                 this.setState({
                   data: [...this.state.data, ...updatedRows],
                 });
-                localStorage.setItem("details", JSON.stringify(updatedRows));
+                localStorage.setItem("events", JSON.stringify(updatedRows));
                 resolve();
               }),
             onRowUpdate: (updatedRow, oldRow) =>
@@ -158,7 +174,7 @@ class Form extends Component {
                 this.setState({
                   data: [...this.state.data, ...updatedRows],
                 });
-                localStorage.setItem("details", JSON.stringify(updatedRows));
+                localStorage.setItem("events", JSON.stringify(updatedRows));
                 resolve();
               }),
           }}
