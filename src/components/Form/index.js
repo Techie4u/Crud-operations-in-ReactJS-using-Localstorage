@@ -9,7 +9,6 @@ class Form extends Component {
   state = {
     data: [],
     status: "",
-    todayDate: new Date(),
     name: "",
     startTime: "",
     endTime: "",
@@ -34,35 +33,40 @@ class Form extends Component {
   };
 
   componentDidMount() {
-    const { startDate, endDate } = this.state;
-
-    // const todayDate = new Date();
-    // const currentDate = moment(new Date(todayDate)).format("YYYY-MM-DD");
-
-    if (
-      moment(new Date(startDate)).format("YYYY-MM-DD") <=
-        moment(new Date()).format("YYYY-MM-DD") &&
-      moment(new Date(endDate)).format("YYYY-MM-DD") >=
-        moment(new Date()).format("YYYY-MM-DD")
-    ) {
-      this.setState({ status: "Inprogress" });
-    } else if (new Date(startDate) > new Date(endDate)) {
-      this.setState({ endDate: startDate });
-    } else if (
-      moment(new Date(startDate)).format("YYYY-MM-DD") <
-        moment(new Date()).format("YYYY-MM-DD") &&
-      moment(new Date(endDate)).format("YYYY-MM-DD") <
-        moment(new Date()).format("YYYY-MM-DD")
-    ) {
-      this.setState({ status: "Completed" });
-    } else if (
-      moment(new Date(startDate)).format("YYYY-MM-DD") >
-        moment(new Date()).format("YYYY-MM-DD") &&
-      moment(new Date(endDate)).format("YYYY-MM-DD") >
-        moment(new Date()).format("YYYY-MM-DD")
-    ) {
-      this.setState({ status: "Upcoming" });
-    }
+    const data = JSON.parse(localStorage.getItem("events"));
+    data &&
+      data.map((event) => {
+        console.log(event)
+        if (
+          moment(new Date(event.startDate)).format("YYYY-MM-DD") >
+          moment(new Date(event.endDate)).format("YYYY-MM-DD")
+        ) {
+          event.endDate = event.startDate;
+          window.location.reload();
+        } else if (
+          moment(new Date(event.startDate)).format("YYYY-MM-DD") <=
+            moment(new Date()).format("YYYY-MM-DD") &&
+          moment(new Date(event.endDate)).format("YYYY-MM-DD") >=
+            moment(new Date()).format("YYYY-MM-DD")
+        ) {
+          event.status = "Inprogress";
+        } else if (
+          moment(new Date(event.startDate)).format("YYYY-MM-DD") <
+            moment(new Date()).format("YYYY-MM-DD") &&
+          moment(new Date(event.endDate)).format("YYYY-MM-DD") <
+            moment(new Date()).format("YYYY-MM-DD")
+        ) {
+          event.status = "Completed";
+        } else if (
+          moment(new Date(event.startDate)).format("YYYY-MM-DD") >
+            moment(new Date()).format("YYYY-MM-DD") &&
+          moment(new Date(event.endDate)).format("YYYY-MM-DD") >
+            moment(new Date()).format("YYYY-MM-DD")
+        ) {
+          event.status = "Upcoming";
+        }
+      });
+    localStorage.setItem("events", JSON.stringify(data));
   }
 
   submitForm = (event) => {
@@ -88,7 +92,7 @@ class Form extends Component {
     this.setState({ startTime: "" });
     this.setState({ endTime: "" });
 
-    //window.location.reload();
+    window.location.reload();
   };
   render() {
     const eventDetails = JSON.parse(localStorage.getItem("events"));
@@ -161,20 +165,23 @@ class Form extends Component {
                 this.setState({
                   data: [...this.state.data, ...updatedRows],
                 });
+
                 localStorage.setItem("events", JSON.stringify(updatedRows));
                 resolve();
               }),
             onRowUpdate: (updatedRow, oldRow) =>
               new Promise((resolve, reject) => {
+                const data = JSON.parse(localStorage.getItem("events"));
                 const index = oldRow.tableData.id;
-
-                const updatedRows = [...eventDetails];
+                console.log("u", updatedRow);
+                console.log("o", oldRow);
+                console.log("i", index);
+                const updatedRows = [...data];
                 updatedRows[index] = updatedRow;
-
-                this.setState({
-                  data: [...this.state.data, ...updatedRows],
-                });
+                console.log("uu", updatedRows);
+                this.componentDidMount();
                 localStorage.setItem("events", JSON.stringify(updatedRows));
+                window.location.reload();
                 resolve();
               }),
           }}
